@@ -25,6 +25,13 @@ class DataIngestion:
         try:
             
             df = pd.read_csv(r"notebook\data\StudentsPerformance.csv")
+            import re
+            df.columns = (
+                df.columns
+                .str.strip()
+                .str.lower()
+                .str.replace(r"[^\w]+", "_", regex=True)
+            )
 
             logging.info("Read the dataset as DataFrame")
 
