@@ -1,70 +1,67 @@
-import os
 import sys
-from src.exception import CustomException
-from src.logger import logging
 import pandas as pd
+from src.exception import CustomException
+from src.utils import load_object
 
-from sklearn.model_selection import train_test_split
-from dataclasses import dataclass
-from src.component.data_transformation import DataTransformation
-from src.component.data_transformation import DataTransformationConfig
-from src.component.model_trainer import ModelTrainerConfig
-from src.component.model_trainer import ModelTrainer
-@dataclass
-class DataIngestionConfig:
-    train_data_path: str = os.path.join("artifacts", "train.csv")
-    test_data_path: str = os.path.join("artifacts", "test.csv")
-    raw_data_path: str = os.path.join("artifacts", "raw.csv")
-
-class DataIngestion:
+class PredictPipeline:
     def __init__(self):
-        self.ingestion_config = DataIngestionConfig()
-
-    def initiate_data_ingestion(self):
-        logging.info("Entered the data ingestion method or component")
+        pass
+    def Predict(self,features):
         try:
+            model_path = "artifacts/model.pkl"
+            preprocessor_path = "artifacts/preprocessor.pkl"
+            model = load_object(file_path = model_path)
+            preprocessor = load_object(file_path = preprocessor_path)
+
+            features.columns = features.columns.str.strip().str.lower().str.replace(" ", "_")
+            expected_cols = preprocessor.feature_names_in_
             
-            df = pd.read_csv(r"notebook\data\StudentsPerformance.csv")
-            import re
-            df.columns = (
-                df.columns
-                .str.strip()
-                .str.lower()
-                .str.replace(r"[^\w]+", "_", regex=True)
-            )
+            for col in expected_cols:
+                if col not in features.columns:
+                    features[col] = 0
+            features = features[expected_cols]
 
-            logging.info("Read the dataset as DataFrame")
-
-            os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
-
-            df.to_csv(self.ingestion_config.raw_data_path, index=False, header=True)
-
-            logging.info("Train test split initiated")
-
-            train_set, test_set = train_test_split(df, test_size=0.2, random_state=42)
-
-            train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
-            test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
-
-            logging.info("Ingestion of the data is completed")
-
-    
-            return (
-                self.ingestion_config.train_data_path,
-                self.ingestion_config.test_data_path
-            )
+           
+            expected_cols = preprocessor.feature_names_in_
+            data_scaled = preprocessor.transform(features)
+            preds = model.predict(data_scaled)
+            return preds
         except Exception as e:
-            raise CustomException(e, sys)
-
-
-
-if __name__ == "__main__":
-    obj = DataIngestion()
-    train_data,test_data = obj.initiate_data_ingestion()
-
-    data_transformation = DataTransformation()
-    train_arr,test_arr,preprocessor = data_transformation.initiate_data_transformation(train_data,test_data)
-
-    modeltrainer = ModelTrainer()
-    print(modeltrainer.initiate_model_trainer(train_arr,test_arr))
+            raise CustomException(e,sys)
+    
+class CustomData:
+    def __init__(self,
+         gender : str,
+        race_ethnicity : str,
+        parental_level_of_education : str,
+        lunch :str,
+        test_preparation_course : str,
+        reading_score : int,
+        writing_score : int,
+        ):
+        self.gender  =  gender
+        self.race_ethnicity =race_ethnicity 
+        self.parental_level_of_education = parental_level_of_education
+        self.lunch = lunch
+        self.test_preparation_course = test_preparation_course
+        self.reading_score = reading_score
+        self.writing_score = writing_score
+    
+    def get_data_as_data_frame(self):
+        try:
+            custom_data_input_dict = {
+                "gender" : [self.gender],
+                "race_ethnicity" : [self.race_ethnicity],
+                "parental_level_of_education" : [self.parental_level_of_education],
+                "lunch" : [self.lunch],
+                "test_preparation_course" : [self.test_preparation_course],
+                "reading_score" : [self.reading_score],
+                "writing_score" : [self.writing_score],
+            }
+            df = pd.DataFrame(custom_data_input_dict)
+           
+    
+            return df
+        except Exception as e:
+            raise CustomException(e,sys)
  

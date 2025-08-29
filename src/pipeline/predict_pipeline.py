@@ -12,17 +12,9 @@ class PredictPipeline:
             preprocessor_path = "artifacts/preprocessor.pkl"
             model = load_object(file_path = model_path)
             preprocessor = load_object(file_path = preprocessor_path)
+            features = features[preprocessor.feature_names_in_]
+             
 
-            features.columns = features.columns.str.strip().str.lower().str.replace(" ", "_")
-            expected_cols = preprocessor.feature_names_in_
-            
-            for col in expected_cols:
-                if col not in features.columns:
-                    features[col] = 0
-            features = features[expected_cols]
-
-           
-            expected_cols = preprocessor.feature_names_in_
             data_scaled = preprocessor.transform(features)
             preds = model.predict(data_scaled)
             return preds
@@ -50,25 +42,16 @@ class CustomData:
     def get_data_as_data_frame(self):
         try:
             custom_data_input_dict = {
-                "Gender" : [self.gender],
-                "Race or Ethnicity" : [self.race_ethnicity],
+                "gender" : [self.gender],
+                "race/ethnicity" : [self.race_ethnicity],
                 "parental level of education" : [self.parental_level_of_education],
-                "Lunch Type" : [self.lunch],
-                "Test_preparation_Course" : [self.test_preparation_course],
-                "Reading Score out of 100Reading Score out of 100" : [self.reading_score],
-                "Writing Score out of 100" : [self.writing_score],
+                "lunch" : [self.lunch],
+                "test preparation course" : [self.test_preparation_course],
+                "reading score" : [self.reading_score],
+                "writing score" : [self.writing_score],
             }
-            df = pd.DataFrame(custom_data_input_dict)
-           
-            import re
-            df.columns = (
-                df.columns
-                .str.strip()
-                .str.lower()
-                .str.replace(r"[^\w]+", "_", regex=True)  
-            )
-
-            return df
+             
+            return pd.DataFrame(custom_data_input_dict)
         except Exception as e:
             raise CustomException(e,sys)
 
